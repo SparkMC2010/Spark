@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="منصة الأستاذ أحمد العربي التعليمية — دروس وحصص ومذكرات في مكان واحد.">
+  <meta name="theme-color" content="#102b4e">
+  <title>منصة الأستاذ أحمد العربي التعليمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="#home"><span class="brand-mark">ع</span><span><strong>الأستاذ أحمد العربي</strong><small>منصتك للتعلّم والتميّز</small></span></a>
+      <nav class="nav" id="mainNav">
+        <a href="#home" class="nav-link active">الرئيسية</a>
+        <a href="#lessons" class="nav-link">الدروس والحصص</a>
+        <a href="#about" class="nav-link">عن الأستاذ</a>
+      </nav>
+      <button class="button button-light" id="openAdminTop">＋ إضافة محتوى</button>
+      <button class="menu-toggle" id="menuToggle" aria-label="فتح القائمة" aria-expanded="false">☰</button>
+    </div>
+  </header>
+
+  <main id="home">
+    <section class="hero">
+      <div class="hero-pattern"></div>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow"><span class="pulse"></span> منصة تعليمية في مكان واحد</span>
+          <h1>اتعلّم بذكاء،<br><span>وحقّق هدفك.</span></h1>
+          <p>أهلًا بيك في منصة الأستاذ أحمد العربي. هتلاقي هنا الحصص والفيديوهات والملخصات مرتّبة، وتقدر ترجع لمحتواك في أي وقت.</p>
+          <div class="hero-actions"><a class="button button-gold" href="#lessons">ابدأ التعلّم <span>←</span></a><button class="button button-outline" id="openAdminHero">أضف أول حصة ＋</button></div>
+          <div class="hero-trust"><span>✓ محتوى منظّم</span><span>✓ فيديوهات وحصص</span><span>✓ ملاحظات وملخصات</span></div>
+        </div>
+        <div class="hero-card" aria-label="بطاقة تعليمية">
+          <div class="hero-card-top"><span class="book-icon">✦</span><span class="live-pill"><i></i> رحلة التعلّم</span></div>
+          <div class="hero-illustration"><div class="sun"></div><div class="book book-back"></div><div class="book book-front"><span>عِلْم</span><i></i><i></i><i></i></div><div class="star star1">✦</div><div class="star star2">✧</div></div>
+          <div class="hero-card-bottom"><div><strong>خطوة بخطوة</strong><small>كل درس يقرّبك من هدفك</small></div><span class="round-arrow">↙</span></div>
+        </div>
+      </div>
+      <div class="container stat-row">
+        <div class="stat"><span class="stat-icon">▤</span><div><strong id="statLessons">٠</strong><small>درس وحصة</small></div></div>
+        <div class="stat"><span class="stat-icon">▶</span><div><strong id="statVideos">٠</strong><small>فيديو تعليمي</small></div></div>
+        <div class="stat"><span class="stat-icon">✎</span><div><strong id="statNotes">٠</strong><small>ملخص ومذكرة</small></div></div>
+      </div>
+    </section>
+
+    <section class="section lessons-section" id="lessons">
+      <div class="container">
+        <div class="section-head">
+          <div><span class="section-kicker">مكتبة المنصة</span><h2>الدروس والحصص</h2><p>كل محتواك التعليمي في مكان واحد، سهل الوصول وسهل الترتيب.</p></div>
+          <button class="button button-primary" id="openAdminLibrary">＋ أضف درسًا جديدًا</button>
+        </div>
+        <div class="toolbar">
+          <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="ابحث عن درس أو حصة..." aria-label="ابحث في المحتوى"></label>
+          <div class="filter-tabs" role="group" aria-label="تصفية المحتوى">
+            <button class="filter active" data-filter="all">الكل</button>
+            <button class="filter" data-filter="video">فيديوهات</button>
+            <button class="filter" data-filter="lesson">حصص</button>
+            <button class="filter" data-filter="notes">ملخصات</button>
+          </div>
+        </div>
+        <div class="content-grid" id="contentGrid"></div>
+        <div class="empty-state" id="emptyState"><div class="empty-icon">✦</div><h3>لسه مفيش محتوى هنا</h3><p>ابدأ بإضافة أول درس أو فيديو أو ملخص من زر «إضافة محتوى».</p><button class="button button-primary" id="openAdminEmpty">＋ إضافة أول محتوى</button></div>
+      </div>
+    </section>
+
+    <section class="teacher-section" id="about">
+      <div class="container teacher-card"><div class="teacher-avatar">أح</div><div class="teacher-copy"><span class="section-kicker">عن المنصة</span><h2>مع الأستاذ أحمد العربي</h2><p>منصة بسيطة لتنظيم الشرح والحصص والفيديوهات والمذكرات، بحيث تقدر تلاقي الدرس اللي محتاجه بسرعة وتتابع رحلتك التعليمية بسهولة.</p></div><a href="#lessons" class="text-link">تصفّح المحتوى <span>←</span></a></div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container footer-inner"><a class="brand footer-brand" href="#home"><span class="brand-mark">ع</span><span><strong>الأستاذ أحمد العربي</strong><small>منصتك للتعلّم والتميّز</small></span></a><p>العلم خطوة، والنجاح رحلة.</p><span>© <span id="year"></span> منصة الأستاذ أحمد العربي</span></div></footer>
+
+  <div class="modal-backdrop" id="adminModal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header"><div><span class="section-kicker">إدارة المحتوى</span><h2 id="modalTitle">إضافة محتوى جديد</h2></div><button class="icon-button" id="closeModal" aria-label="إغلاق">×</button></div>
+      <p class="modal-help">اكتب تفاصيل الدرس، والصق رابط فيديو إن وجد، ثم اضغط حفظ.</p>
+      <form id="contentForm">
+        <label class="field">عنوان الدرس <input name="title" required maxlength="100" placeholder="مثال: مقدمة في النحو"></label>
+        <div class="form-row">
+          <label class="field">نوع المحتوى<select name="type" id="contentType"><option value="lesson">حصة / درس</option><option value="video">فيديو</option><option value="notes">ملخص / مذكرة</option></select></label>
+          <label class="field">المادة أو القسم<input name="subject" maxlength="60" placeholder="مثال: اللغة العربية"></label>
+        </div>
+        <label class="field">وصف أو ملاحظات<textarea name="description" rows="3" maxlength="1200" placeholder="اكتب شرحًا مختصرًا أو نقاط الدرس..."></textarea></label>
+        <label class="field">رابط الفيديو (اختياري)<input name="videoUrl" type="url" placeholder="https://www.youtube.com/watch?v=..."><small>يمكنك وضع رابط YouTube أو رابط فيديو مباشر. تأكد إن الرابط متاح للطلاب.</small></label>
+        <label class="field">رابط ملف أو مذكرة (اختياري)<input name="fileUrl" type="url" placeholder="https://..."></label>
+        <div class="form-actions"><button type="button" class="button button-outline-dark" id="cancelModal">إلغاء</button><button type="submit" class="button button-primary">حفظ المحتوى ✓</button></div>
+      </form>
+      <p class="storage-note">ملاحظة: هذه النسخة تحفظ المحتوى على نفس المتصفح والجهاز فقط، ولا ترفعه للطلاب على الإنترنت تلقائيًا.</p>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="detailModal" hidden>
+    <section class="modal detail-modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <div class="modal-header"><div><span class="section-kicker" id="detailSubject">محتوى تعليمي</span><h2 id="detailTitle">عنوان الدرس</h2></div><button class="icon-button" id="closeDetail" aria-label="إغلاق">×</button></div>
+      <div id="detailVideo" class="detail-video"></div><p id="detailDescription" class="detail-description"></p><a id="detailFile" class="button button-primary" href="#" target="_blank" rel="noopener" hidden>فتح الملف أو المذكرة ↗</a>
+      <div class="detail-actions"><button id="deleteContent" class="button button-danger">حذف المحتوى</button><button id="doneDetail" class="button button-outline-dark">إغلاق</button></div>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
