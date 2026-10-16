@@ -1,216 +1,43 @@
-const STORAGE_KEY = "ahmed-arabi-platform-content-v1";
-const $ = (selector) => document.querySelector(selector);
-const grid = $("#contentGrid");
-const emptyState = $("#emptyState");
-const adminModal = $("#adminModal");
-const detailModal = $("#detailModal");
-const form = $("#contentForm");
-let contents = loadContents();
-let activeFilter = "all";
-let activeItemId = null;
-let toastTimer;
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js';
 
-const typeNames = { lesson: "حصة / درس", video: "فيديو", notes: "ملخص / مذكرة" };
-const typeIcons = { lesson: "▤", video: "▶", notes: "✎" };
-
-function loadContents() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
-  } catch (error) {
-    return [];
-  }
+const firebaseConfig = {
+  apiKey: "AIzaSyDSACYhhCPzQ4W2OLi4EcAErD4uJV64nbc",
+  authDomain: "menasa-for-ahmed-elaraby.firebaseapp.com",
+  projectId: "menasa-for-ahmed-elaraby",
+  storageBucket: "menasa-for-ahmed-elaraby.firebasestorage.app",
+  messagingSenderId: "638254305560",
+  appId: "1:638254305560:web:1c881196ad0c907a090e6d",
+  measurementId: "G-1MD4S51P7M"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = s => document.querySelector(s);
+const grid = $('#contentGrid'), emptyState = $('#emptyState'), adminModal = $('#adminModal'), detailModal = $('#detailModal'), form = $('#contentForm');
+let contents = [], activeFilter='all', activeItemId=null, toastTimer, currentUser=null, unsubscribe=null;
+const typeNames={lesson:'حصة / درس',video:'فيديو',notes:'ملخص / مذكرة'}, typeIcons={lesson:'▤',video:'▶',notes:'✎'};
+function safeText(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function formatDate(v){try{return new Intl.DateTimeFormat('ar-EG',{day:'numeric',month:'short',year:'numeric'}).format(new Date(v));}catch{return '';}}
+function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3500);}
+function render(){const q=$('#searchInput').value.trim().toLocaleLowerCase('ar'), grade=$('#gradeFilter')?.value||'all'; const filtered=contents.filter(x=>(activeFilter==='all'||x.type===activeFilter)&&(`${x.title||''} ${x.subject||''} ${x.description||''}`).toLocaleLowerCase('ar').includes(q)&&(grade==='all'||(x.grade||'4 ابتدائي')===grade));
+ grid.innerHTML=filtered.map(x=>`<article class="content-card"><div class="card-cover"><span class="type-badge">${typeNames[x.type]||'محتوى'}</span><span class="cover-icon">${typeIcons[x.type]||'▤'}</span></div><div class="card-body"><span class="card-subject">${safeText(x.grade||'4 ابتدائي')} · ${safeText(x.subject||'محتوى تعليمي')}</span><h3>${safeText(x.title)}</h3><p>${safeText(x.description||'افتح المحتوى لعرض التفاصيل.')}</p><div class="card-bottom"><span class="card-date">${formatDate(x.createdAt)}</span><button class="card-open" data-open="${safeText(x.id)}">عرض المحتوى ←</button></div></div></article>`).join('');
+ emptyState.classList.toggle('show',!filtered.length);grid.style.display=filtered.length?'grid':'none';$('#statLessons').textContent=new Intl.NumberFormat('ar-EG').format(contents.filter(x=>x.type==='lesson').length);$('#statVideos').textContent=new Intl.NumberFormat('ar-EG').format(contents.filter(x=>x.type==='video'||x.videoUrl).length);$('#statNotes').textContent=new Intl.NumberFormat('ar-EG').format(contents.filter(x=>x.type==='notes'||x.fileUrl).length);
+ // Students do not see teacher-only delete controls.
+ $('#deleteContent').hidden=!currentUser;
 }
-function saveContents() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(contents));
-    return true;
-  } catch (error) {
-    showToast("المتصفح لم يستطع حفظ المحتوى. جرّب حذف بعض البيانات.");
-    return false;
-  }
-}
-function safeText(value = "") {
-  return String(value).replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[char]));
-}
-function formatDate(value) {
-  try { return new Intl.DateTimeFormat("ar-EG", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value)); }
-  catch { return ""; }
-}
-function render() {
-  const query = $("#searchInput").value.trim().toLocaleLowerCase("ar");
-  const grade = $("#gradeFilter")?.value || "all";
-  const filtered = contents.filter((item) => {
-    const matchesType = activeFilter === "all" || item.type === activeFilter;
-    const text = `${item.title} ${item.subject} ${item.description}`.toLocaleLowerCase("ar");
-    return matchesType && text.includes(query) && (grade === "all" || (item.grade || "4 ابتدائي") === grade);
-  });
-  grid.innerHTML = filtered.map((item) => `
-    <article class="content-card">
-      <div class="card-cover">
-        <span class="type-badge">${typeNames[item.type]}</span>
-        <span class="cover-icon">${typeIcons[item.type]}</span>
-      </div>
-      <div class="card-body">
-        <span class="card-subject">${safeText(item.grade || "4 ابتدائي")} · ${safeText(item.subject || "محتوى تعليمي")}</span>
-        <h3>${safeText(item.title)}</h3>
-        <p>${safeText(item.description || "افتح المحتوى لعرض التفاصيل.")}</p>
-        <div class="card-bottom"><span class="card-date">${formatDate(item.createdAt)}</span><button class="card-open" data-open="${safeText(item.id)}">عرض المحتوى ←</button></div>
-      </div>
-    </article>`).join("");
-  emptyState.classList.toggle("show", filtered.length === 0);
-  grid.style.display = filtered.length ? "grid" : "none";
-  $("#statLessons").textContent = new Intl.NumberFormat("ar-EG").format(contents.filter(x => x.type === "lesson").length);
-  $("#statVideos").textContent = new Intl.NumberFormat("ar-EG").format(contents.filter(x => x.type === "video" || x.videoUrl).length);
-  $("#statNotes").textContent = new Intl.NumberFormat("ar-EG").format(contents.filter(x => x.type === "notes" || x.fileUrl).length);
-}
-function showToast(message) {
-  const toast = $("#toast");
-  toast.textContent = message;
-  toast.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
-}
-function openAdmin() {
-  adminModal.hidden = false;
-  document.body.style.overflow = "hidden";
-  setTimeout(() => form.elements.title.focus(), 30);
-}
-function closeAdmin() {
-  adminModal.hidden = true;
-  document.body.style.overflow = "";
-}
-function closeDetail() {
-  detailModal.hidden = true;
-  $("#detailVideo").innerHTML = "";
-  document.body.style.overflow = "";
-  activeItemId = null;
-}
-function getYouTubeEmbed(url) {
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname === "youtu.be") return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(parsed.pathname.slice(1))}`;
-    if (parsed.hostname.endsWith("youtube.com")) {
-      const id = parsed.searchParams.get("v") || parsed.pathname.match(/\/embed\/([^/]+)/)?.[1] || parsed.pathname.match(/\/shorts\/([^/]+)/)?.[1];
-      if (id) return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`;
-    }
-  } catch {}
-  return null;
-}
-function openDetail(id) {
-  const item = contents.find(x => x.id === id);
-  if (!item) return;
-  activeItemId = id;
-  $("#detailTitle").textContent = item.title;
-  $("#detailSubject").textContent = `${typeNames[item.type]} · ${item.subject || "محتوى تعليمي"}`;
-  $("#detailDescription").textContent = item.description || "لا توجد ملاحظات إضافية لهذا المحتوى.";
-  const videoBox = $("#detailVideo");
-  videoBox.innerHTML = "";
-  if (item.videoUrl) {
-    const embed = getYouTubeEmbed(item.videoUrl);
-    if (embed) {
-      const iframe = document.createElement("iframe");
-      iframe.src = embed;
-      iframe.title = `فيديو: ${item.title}`;
-      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-      iframe.allowFullscreen = true;
-      videoBox.appendChild(iframe);
-    } else if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(item.videoUrl)) {
-      const video = document.createElement("video");
-      video.src = item.videoUrl;
-      video.controls = true;
-      video.playsInline = true;
-      video.textContent = "متصفحك لا يدعم تشغيل الفيديو.";
-      videoBox.appendChild(video);
-    } else {
-      const placeholder = document.createElement("div");
-      placeholder.className = "video-placeholder";
-      const text = document.createElement("strong");
-      text.textContent = "الفيديو مرفق بالرابط";
-      const link = document.createElement("a");
-      link.href = item.videoUrl; link.target = "_blank"; link.rel = "noopener"; link.className = "button button-gold"; link.textContent = "فتح الفيديو ↗";
-      placeholder.append(text, link);
-      videoBox.appendChild(placeholder);
-    }
-    videoBox.hidden = false;
-  } else {
-    videoBox.innerHTML = '<div class="video-placeholder"><div style="font-size:30px">✎</div><strong>محتوى الدرس</strong><p>يمكنك إضافة رابط فيديو عند إنشاء المحتوى.</p></div>';
-  }
-  const file = $("#detailFile");
-  if (item.fileUrl) { file.href = item.fileUrl; file.hidden = false; } else { file.hidden = true; file.removeAttribute("href"); }
-  detailModal.hidden = false;
-  document.body.style.overflow = "hidden";
-}
-
-["#openAdminTop", "#openAdminHero", "#openAdminLibrary", "#openAdminEmpty"].forEach(sel => $(sel).addEventListener("click", openAdmin));
-$("#closeModal").addEventListener("click", closeAdmin);
-$("#cancelModal").addEventListener("click", closeAdmin);
-$("#closeDetail").addEventListener("click", closeDetail);
-$("#doneDetail").addEventListener("click", closeDetail);
-adminModal.addEventListener("click", (e) => { if (e.target === adminModal) closeAdmin(); });
-detailModal.addEventListener("click", (e) => { if (e.target === detailModal) closeDetail(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeAdmin(); closeDetail(); } });
-
-form.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const data = new FormData(form);
-  const title = String(data.get("title") || "").trim();
-  if (!title) { showToast("اكتب عنوان الدرس الأول."); return; }
-  const item = {
-    id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    title,
-    type: String(data.get("type") || "lesson"),
-    subject: String(data.get("subject") || "").trim(),
-    grade: String(data.get("grade") || "4 ابتدائي"),
-    description: String(data.get("description") || "").trim(),
-    videoUrl: String(data.get("videoUrl") || "").trim(),
-    fileUrl: String(data.get("fileUrl") || "").trim(),
-    createdAt: new Date().toISOString()
-  };
-  contents.unshift(item);
-  saveContents();
-  render();
-  form.reset();
-  closeAdmin();
-  showToast("تم حفظ المحتوى على هذا الجهاز بنجاح.");
-});
-
-grid.addEventListener("click", (e) => {
-  const button = e.target.closest("[data-open]");
-  if (button) openDetail(button.dataset.open);
-});
-$("#searchInput").addEventListener("input", render);
-$("#gradeFilter").addEventListener("change", render);
-$("#gateForm").addEventListener("submit", (e) => { e.preventDefault(); if ($("#studentCode").value.trim() === "2468") { $("#studentGate").remove(); sessionStorage.setItem("student-demo-unlocked", "1"); } else { showToast("كود الدخول غير صحيح."); } });
-if (sessionStorage.getItem("student-demo-unlocked") === "1") $("#studentGate").remove();
-document.querySelectorAll(".filter").forEach((button) => {
-  button.addEventListener("click", () => {
-    activeFilter = button.dataset.filter;
-    document.querySelectorAll(".filter").forEach(b => b.classList.toggle("active", b === button));
-    render();
-  });
-});
-$("#deleteContent").addEventListener("click", () => {
-  if (!activeItemId) return;
-  if (!confirm("متأكد إنك عايز تحذف المحتوى ده؟")) return;
-  contents = contents.filter(item => item.id !== activeItemId);
-  saveContents();
-  closeDetail();
-  render();
-  showToast("تم حذف المحتوى.");
-});
-$("#year").textContent = new Date().getFullYear();
-
-const menuToggle = $("#menuToggle");
-const mainNav = $("#mainNav");
-menuToggle.addEventListener("click", () => {
-  const open = mainNav.classList.toggle("open");
-  menuToggle.setAttribute("aria-expanded", String(open));
-});
-mainNav.querySelectorAll("a").forEach(link => link.addEventListener("click", () => {
-  mainNav.classList.remove("open");
-  menuToggle.setAttribute("aria-expanded", "false");
-}));
-render();
+function openAdmin(){if(!currentUser){teacherLogin();return;}adminModal.hidden=false;document.body.style.overflow='hidden';setTimeout(()=>form.elements.title.focus(),30);}
+function closeAdmin(){adminModal.hidden=true;document.body.style.overflow='';}
+async function teacherLogin(){const email=prompt('دخول المدرس: اكتب البريد الإلكتروني الخاص بحساب المدرس في Firebase');if(!email)return;const password=prompt('اكتب كلمة مرور حساب المدرس');if(!password)return;try{await signInWithEmailAndPassword(auth,email.trim(),password);showToast('تم تسجيل دخول المدرس.');openAdmin();}catch(e){showToast('تعذر تسجيل الدخول. تأكد من إنشاء حساب المدرس وتفعيل Email/Password في Firebase.');console.error(e);}}
+function closeDetail(){detailModal.hidden=true;$('#detailVideo').innerHTML='';document.body.style.overflow='';activeItemId=null;}
+function getYouTubeEmbed(url){try{const u=new URL(url);if(u.hostname==='youtu.be')return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(u.pathname.slice(1))}`;if(u.hostname.endsWith('youtube.com')){const id=u.searchParams.get('v')||u.pathname.match(/\/embed\/([^/]+)/)?.[1]||u.pathname.match(/\/shorts\/([^/]+)/)?.[1];if(id)return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`;}}catch{}return null;}
+function openDetail(id){const x=contents.find(i=>i.id===id);if(!x)return;activeItemId=id;$('#detailTitle').textContent=x.title;$('#detailSubject').textContent=`${typeNames[x.type]||'محتوى'} · ${x.subject||'محتوى تعليمي'}`;$('#detailDescription').textContent=x.description||'لا توجد ملاحظات إضافية لهذا المحتوى.';const box=$('#detailVideo');box.innerHTML='';if(x.videoUrl){const embed=getYouTubeEmbed(x.videoUrl);if(embed){const f=document.createElement('iframe');f.src=embed;f.title=`فيديو: ${x.title}`;f.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';f.allowFullscreen=true;box.appendChild(f);}else if(/\.(mp4|webm|ogg)(\?.*)?$/i.test(x.videoUrl)){const v=document.createElement('video');v.src=x.videoUrl;v.controls=true;v.playsInline=true;box.appendChild(v);}else{const a=document.createElement('a');a.href=x.videoUrl;a.target='_blank';a.rel='noopener';a.className='button button-gold';a.textContent='فتح الفيديو ↗';box.appendChild(a);}}else box.innerHTML='<div class="video-placeholder"><strong>محتوى الدرس</strong><p>يمكنك إضافة رابط فيديو عند إنشاء المحتوى.</p></div>';const file=$('#detailFile');if(x.fileUrl){file.href=x.fileUrl;file.hidden=false;}else{file.hidden=true;file.removeAttribute('href');}$('#deleteContent').hidden=!currentUser;detailModal.hidden=false;document.body.style.overflow='hidden';}
+async function refreshContents(){try{const snap=await getDocs(query(collection(db,'lessons'),orderBy('createdAt','desc')));contents=snap.docs.map(d=>({id:d.id,...d.data()}));render();}catch(e){console.error(e);showToast('تعذر تحميل الحصص. تأكد من نشر قواعد Firestore الصحيحة.');}}
+['#openAdminTop','#openAdminHero','#openAdminLibrary','#openAdminEmpty'].forEach(s=>$(s).addEventListener('click',openAdmin));$('#closeModal').addEventListener('click',closeAdmin);$('#cancelModal').addEventListener('click',closeAdmin);$('#closeDetail').addEventListener('click',closeDetail);$('#doneDetail').addEventListener('click',closeDetail);adminModal.addEventListener('click',e=>{if(e.target===adminModal)closeAdmin();});detailModal.addEventListener('click',e=>{if(e.target===detailModal)closeDetail();});document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAdmin();closeDetail();}});
+form.addEventListener('submit',async e=>{e.preventDefault();if(!currentUser){showToast('سجّل دخول المدرس أولًا.');return;}const d=new FormData(form),title=String(d.get('title')||'').trim();if(!title){showToast('اكتب عنوان الدرس الأول.');return;}const item={title,type:String(d.get('type')||'lesson'),subject:String(d.get('subject')||'').trim(),grade:String(d.get('grade')||'4 ابتدائي'),description:String(d.get('description')||'').trim(),videoUrl:String(d.get('videoUrl')||'').trim(),fileUrl:String(d.get('fileUrl')||'').trim(),createdAt:new Date().toISOString(),createdBy:currentUser.uid};try{await addDoc(collection(db,'lessons'),item);form.reset();closeAdmin();showToast('تم نشر الحصة على المنصة لكل الطلاب.');await refreshContents();}catch(err){console.error(err);showToast('لم يتم النشر. راجع قواعد Firestore وإيميل المدرس المسموح.');}});
+grid.addEventListener('click',e=>{const b=e.target.closest('[data-open]');if(b)openDetail(b.dataset.open);});$('#searchInput').addEventListener('input',render);$('#gradeFilter').addEventListener('change',render);document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{activeFilter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render();}));
+$('#deleteContent').addEventListener('click',async()=>{if(!currentUser||!activeItemId)return;if(!confirm('متأكد إنك عايز تحذف المحتوى ده؟'))return;try{await deleteDoc(doc(db,'lessons',activeItemId));closeDetail();showToast('تم حذف المحتوى.');await refreshContents();}catch(e){console.error(e);showToast('تعذر الحذف؛ راجع قواعد الأمان.');}});
+$('#year').textContent=new Date().getFullYear();const menuToggle=$('#menuToggle'),mainNav=$('#mainNav');menuToggle.addEventListener('click',()=>{const o=mainNav.classList.toggle('open');menuToggle.setAttribute('aria-expanded',String(o));});mainNav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{mainNav.classList.remove('open');menuToggle.setAttribute('aria-expanded','false');}));
+onAuthStateChanged(auth,user=>{currentUser=user;render();});
+refreshContents();

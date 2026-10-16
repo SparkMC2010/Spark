@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <script src="js/app.js" defer></script>
+  <script type="module" src="js/app.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -57,7 +57,6 @@
           <button class="button button-primary" id="openAdminLibrary">＋ أضف درسًا جديدًا</button>
         </div>
         <div class="toolbar">
-          <label class="field" style="min-width:200px;margin:0">المرحلة التعليمية<select id="gradeFilter"><option value="all">كل المراحل</option><option>4 ابتدائي</option><option>5 ابتدائي</option><option>6 ابتدائي</option><option>1 إعدادي</option><option>2 إعدادي</option><option>3 إعدادي</option><option>1 ثانوي</option><option>2 ثانوي</option><option>3 ثانوي</option></select></label>
           <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="ابحث عن درس أو حصة..." aria-label="ابحث في المحتوى"></label>
           <div class="filter-tabs" role="group" aria-label="تصفية المحتوى">
             <button class="filter active" data-filter="all">الكل</button>
@@ -84,7 +83,6 @@
       <p class="modal-help">اكتب تفاصيل الدرس، والصق رابط فيديو إن وجد، ثم اضغط حفظ.</p>
       <form id="contentForm">
         <label class="field">عنوان الدرس <input name="title" required maxlength="100" placeholder="مثال: مقدمة في النحو"></label>
-        <label class="field">المرحلة التعليمية<select name="grade" required><option value="4 ابتدائي">الصف الرابع الابتدائي</option><option value="5 ابتدائي">الصف الخامس الابتدائي</option><option value="6 ابتدائي">الصف السادس الابتدائي</option><option value="1 إعدادي">الصف الأول الإعدادي</option><option value="2 إعدادي">الصف الثاني الإعدادي</option><option value="3 إعدادي">الصف الثالث الإعدادي</option><option value="1 ثانوي">الصف الأول الثانوي</option><option value="2 ثانوي">الصف الثاني الثانوي</option><option value="3 ثانوي">الصف الثالث الثانوي</option></select></label>
         <div class="form-row">
           <label class="field">نوع المحتوى<select name="type" id="contentType"><option value="lesson">حصة / درس</option><option value="video">فيديو</option><option value="notes">ملخص / مذكرة</option></select></label>
           <label class="field">المادة أو القسم<input name="subject" maxlength="60" placeholder="مثال: اللغة العربية"></label>
@@ -94,7 +92,7 @@
         <label class="field">رابط ملف أو مذكرة (اختياري)<input name="fileUrl" type="url" placeholder="https://..."></label>
         <div class="form-actions"><button type="button" class="button button-outline-dark" id="cancelModal">إلغاء</button><button type="submit" class="button button-primary">حفظ المحتوى ✓</button></div>
       </form>
-      <p class="storage-note">ملاحظة: هذه النسخة تحفظ المحتوى على نفس المتصفح والجهاز فقط، ولا ترفعه للطلاب على الإنترنت تلقائيًا.</p>
+      <p class="storage-note">تُحفظ الحصص المنشورة في قاعدة البيانات السحابية وتظهر للطلاب عبر الإنترنت.</p>
     </section>
   </div>
 
@@ -105,7 +103,6 @@
       <div class="detail-actions"><button id="deleteContent" class="button button-danger">حذف المحتوى</button><button id="doneDetail" class="button button-outline-dark">إغلاق</button></div>
     </section>
   </div>
-  <div id="studentGate" style="position:fixed;inset:0;z-index:9999;background:#102b4e;display:grid;place-items:center;padding:20px"><form id="gateForm" style="background:white;padding:28px;border-radius:18px;width:min(420px,100%);text-align:center"><div style="font-size:42px">🔐</div><h2 style="color:#102b4e">دخول الطلاب</h2><p>أدخل كود الدخول الذي حصلت عليه من الأستاذ أحمد العربي</p><input id="studentCode" required placeholder="كود الدخول" style="width:100%;padding:13px;border:1px solid #ccd7e5;border-radius:10px;margin:12px 0;text-align:center"><button class="button button-primary" style="width:100%" type="submit">دخول المنصة</button><p style="font-size:11px;color:#a33;margin-top:14px">نسخة تجريبية: الكود 2468 (ليس نظام حماية حقيقيًا)</p></form></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
