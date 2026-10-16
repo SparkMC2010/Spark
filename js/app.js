@@ -41,10 +41,11 @@ function formatDate(value) {
 }
 function render() {
   const query = $("#searchInput").value.trim().toLocaleLowerCase("ar");
+  const grade = $("#gradeFilter")?.value || "all";
   const filtered = contents.filter((item) => {
     const matchesType = activeFilter === "all" || item.type === activeFilter;
     const text = `${item.title} ${item.subject} ${item.description}`.toLocaleLowerCase("ar");
-    return matchesType && text.includes(query);
+    return matchesType && text.includes(query) && (grade === "all" || (item.grade || "4 ابتدائي") === grade);
   });
   grid.innerHTML = filtered.map((item) => `
     <article class="content-card">
@@ -53,7 +54,7 @@ function render() {
         <span class="cover-icon">${typeIcons[item.type]}</span>
       </div>
       <div class="card-body">
-        <span class="card-subject">${safeText(item.subject || "محتوى تعليمي")}</span>
+        <span class="card-subject">${safeText(item.grade || "4 ابتدائي")} · ${safeText(item.subject || "محتوى تعليمي")}</span>
         <h3>${safeText(item.title)}</h3>
         <p>${safeText(item.description || "افتح المحتوى لعرض التفاصيل.")}</p>
         <div class="card-bottom"><span class="card-date">${formatDate(item.createdAt)}</span><button class="card-open" data-open="${safeText(item.id)}">عرض المحتوى ←</button></div>
@@ -162,6 +163,7 @@ form.addEventListener("submit", (e) => {
     title,
     type: String(data.get("type") || "lesson"),
     subject: String(data.get("subject") || "").trim(),
+    grade: String(data.get("grade") || "4 ابتدائي"),
     description: String(data.get("description") || "").trim(),
     videoUrl: String(data.get("videoUrl") || "").trim(),
     fileUrl: String(data.get("fileUrl") || "").trim(),
@@ -180,6 +182,9 @@ grid.addEventListener("click", (e) => {
   if (button) openDetail(button.dataset.open);
 });
 $("#searchInput").addEventListener("input", render);
+$("#gradeFilter").addEventListener("change", render);
+$("#gateForm").addEventListener("submit", (e) => { e.preventDefault(); if ($("#studentCode").value.trim() === "2468") { $("#studentGate").remove(); sessionStorage.setItem("student-demo-unlocked", "1"); } else { showToast("كود الدخول غير صحيح."); } });
+if (sessionStorage.getItem("student-demo-unlocked") === "1") $("#studentGate").remove();
 document.querySelectorAll(".filter").forEach((button) => {
   button.addEventListener("click", () => {
     activeFilter = button.dataset.filter;
